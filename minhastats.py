@@ -76,3 +76,68 @@ def moda(dados):
             modas.append(valor)
 
     return sorted(modas)
+
+# AMPLITUDE
+
+def amplitude(dados):
+    """
+    Calcula a amplitude total de uma sequência numérica.
+
+    A amplitude corresponde à diferença entre
+    o maior e o menor valor.
+    """
+    if len(dados) == 0:
+        raise ValueError(
+            "Amplitude de sequência vazia é indefinida."
+        )
+
+    return max(dados) - min(dados)
+
+# VARIÂNCIA
+
+def variancia(dados, amostral=True):
+    """
+    Calcula a variância de uma sequência numérica.
+
+    Se amostral=True, divide por n - 1.
+    Se amostral=False, divide por n.
+    """
+    n = len(dados)
+
+    if n == 0:
+        raise ValueError(
+            "Variância de sequência vazia é indefinida."
+        )
+
+    if amostral and n < 2:
+        raise ValueError(
+            "Variância amostral exige pelo menos dois valores."
+        )
+
+    media_dos_dados = media(dados)
+
+    soma_dos_quadrados = sum(
+        (valor - media_dos_dados) ** 2
+        for valor in dados
+    )
+
+    if amostral:
+        divisor = n - 1
+    else:
+        divisor = n
+
+    return soma_dos_quadrados / divisor
+
+# DESVIO PADRÃO
+
+def desvio_padrao(dados, amostral=True):
+    """
+    Calcula o desvio-padrão de uma sequência numérica.
+
+    Se amostral=True, utiliza a variância amostral.
+    Se amostral=False, utiliza a variância populacional.
+    """
+    return variancia(
+        dados,
+        amostral=amostral
+    ) ** 0.5
