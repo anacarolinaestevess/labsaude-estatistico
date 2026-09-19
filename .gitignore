@@ -1,0 +1,16 @@
+# Ambiente virtual
+.venv/
+
+# Arquivos temporários do Python
+__pycache__/
+*.py[cod]
+
+# Arquivos temporários dos testes
+.pytest_cache/
+
+# Configurações locais do VS Code
+.vscode/
+
+# Variáveis e informações confidenciais
+.env
+.streamlit/secrets.toml
