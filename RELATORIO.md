@@ -67,6 +67,127 @@ Foram implementadas simulações da Lei dos Grandes Números e do Teorema Centra
 
 Também foram incluídas aplicações interativas das distribuições Normal e Binomial.
 
+### 5.1 Fórmulas implementadas no núcleo estatístico
+
+As medidas exibidas pelo aplicativo são calculadas pelas funções próprias do arquivo `minhastats.py`.
+
+#### Média aritmética
+
+\[
+\bar{x} = \frac{\sum_{i=1}^{n} x_i}{n}
+\]
+
+#### Variância populacional
+
+\[
+\sigma^2 = \frac{\sum_{i=1}^{n}(x_i-\bar{x})^2}{n}
+\]
+
+#### Variância amostral
+
+\[
+s^2 = \frac{\sum_{i=1}^{n}(x_i-\bar{x})^2}{n-1}
+\]
+
+#### Desvio-padrão
+
+\[
+s = \sqrt{s^2}
+\]
+
+#### Coeficiente de variação
+
+\[
+CV = \frac{s}{\bar{x}} \times 100
+\]
+
+#### Covariância amostral
+
+\[
+\operatorname{cov}(X,Y) =
+\frac{\sum_{i=1}^{n}(x_i-\bar{x})(y_i-\bar{y})}{n-1}
+\]
+
+#### Correlação de Pearson
+
+\[
+r =
+\frac{\operatorname{cov}(X,Y)}{s_Xs_Y}
+\]
+
+#### Regressão linear simples
+
+\[
+\hat{y} = b_0 + b_1x
+\]
+
+\[
+b_1 =
+\frac{\sum(x_i-\bar{x})(y_i-\bar{y})}
+{\sum(x_i-\bar{x})^2}
+\]
+
+\[
+b_0 = \bar{y} - b_1\bar{x}
+\]
+
+#### Coeficiente de determinação
+
+\[
+R^2 =
+1 -
+\frac{\sum(y_i-\hat{y}_i)^2}
+{\sum(y_i-\bar{y})^2}
+\]
+
+Os percentis foram calculados pela posição \(p(n-1)/100\) no vetor ordenado, com interpolação linear entre os valores vizinhos.
+
+### 5.2 Validação das funções
+
+As implementações próprias foram verificadas por 65 testes automatizados. As bibliotecas NumPy e SciPy foram utilizadas apenas como referências nos testes, e não para calcular as medidas apresentadas pelo aplicativo.
+
+| Função própria | Referência de validação | Diferença observada | Tolerância |
+|---|---|---:|---:|
+| Média | `numpy.mean` | Dentro da tolerância | \(10^{-9}\) |
+| Mediana | `numpy.median` | Dentro da tolerância | \(10^{-9}\) |
+| Moda | `scipy.stats.mode` e casos conhecidos | Resultado equivalente | Exata |
+| Amplitude | `numpy.ptp` | Dentro da tolerância | \(10^{-9}\) |
+| Variância populacional | `numpy.var(ddof=0)` | Dentro da tolerância | \(10^{-9}\) |
+| Variância amostral | `numpy.var(ddof=1)` | Dentro da tolerância | \(10^{-9}\) |
+| Desvio-padrão | `numpy.std` | Dentro da tolerância | \(10^{-9}\) |
+| Percentis e quartis | `numpy.percentile` | Dentro da tolerância | \(10^{-6}\) |
+| Covariância | `numpy.cov` | Dentro da tolerância | \(10^{-9}\) |
+| Correlação de Pearson | `scipy.stats.pearsonr` | Dentro da tolerância | \(10^{-9}\) |
+| Regressão linear | `scipy.stats.linregress` | Dentro da tolerância | \(10^{-9}\) |
+
+![Execução dos testes automatizados](assets/testes_nucleo.png)
+
+### 5.3 Evidências dos módulos
+
+#### Módulo 2 — Estatística descritiva
+
+O módulo permite selecionar variáveis numéricas e categóricas, calcular medidas com o núcleo próprio, produzir tabelas de frequências e visualizar histogramas, boxplots e gráficos categóricos. Os valores extremos são identificados pelo método do intervalo interquartil.
+
+![Estatística descritiva](assets/estatistica_descritiva.png)
+
+#### Módulo 3 — Simulações de Monte Carlo
+
+A Lei dos Grandes Números e o Teorema Central do Limite foram demonstrados por reamostragens, com reposição, do valor total das AIH. O tamanho das amostras e o número de repetições podem ser alterados pelo usuário.
+
+![Simulações de Monte Carlo](assets/simulacoes_monte_carlo.png)
+
+#### Módulo 4 — Distribuições de probabilidade
+
+A distribuição Normal foi sobreposta ao histograma dos dados utilizando média e desvio-padrão calculados pelas funções próprias. O aplicativo discute as limitações do ajuste quando os dados apresentam assimetria. Também foi implementada a distribuição Binomial para representar, de forma didática, o número de registros de óbito em uma quantidade fixa de AIH.
+
+![Distribuições de probabilidade](assets/distribuicoes_probabilidade.png)
+
+#### Módulo 5 — Correlação e regressão
+
+O módulo calcula o coeficiente de Pearson, apresenta o diagrama de dispersão, ajusta a regressão linear por mínimos quadrados e exibe equação, \(R^2\) e previsão interativa. A previsão é limitada ao intervalo observado da variável explicativa para evitar extrapolação.
+
+![Correlação e regressão linear](assets/correlacao_regressao.png)
+
 ## 6. Principais descobertas
 
 ### 6.1 AIH com registro de óbito
