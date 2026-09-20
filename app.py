@@ -640,7 +640,94 @@ st.info(
 
 st.divider()
 st.header("Distribuições de probabilidade")
+st.subheader("Ajuste da distribuição Normal aos dados")
 
+st.write(
+    f"A curva Normal abaixo utiliza a média e o desvio-padrão "
+    f"calculados para a variável **{variavel}**."
+)
+
+media_ajuste = ms.media(valores)
+desvio_ajuste = ms.desvio_padrao(
+    valores,
+    amostral=True,
+)
+
+limite_visualizacao = ms.percentil(valores, 99)
+
+valores_curva_ajuste = np.linspace(
+    min(valores),
+    limite_visualizacao,
+    500,
+)
+
+densidade_ajuste = (
+    1 / (desvio_ajuste * math.sqrt(2 * math.pi))
+    * np.exp(
+        -0.5
+        * (
+            (valores_curva_ajuste - media_ajuste)
+            / desvio_ajuste
+        ) ** 2
+    )
+)
+
+figura_ajuste, eixo_ajuste = plt.subplots()
+
+eixo_ajuste.hist(
+    valores,
+    bins=numero_classes_sturges,
+    range=(min(valores), limite_visualizacao),
+    density=True,
+    color="#7AC7C4",
+    edgecolor="white",
+    alpha=0.7,
+    label="Dados observados",
+)
+
+eixo_ajuste.plot(
+    valores_curva_ajuste,
+    densidade_ajuste,
+    color="#D1495B",
+    linewidth=2,
+    label="Normal teórica",
+)
+
+eixo_ajuste.set_xlabel(variavel)
+eixo_ajuste.set_ylabel("Densidade")
+eixo_ajuste.set_title(
+    f"Dados observados e curva Normal: {variavel}"
+)
+eixo_ajuste.legend()
+
+st.pyplot(figura_ajuste)
+plt.close(figura_ajuste)
+
+st.caption(
+    "Para melhorar a visualização, o gráfico é apresentado até o "
+    "percentil 99. A média e o desvio-padrão foram calculados com "
+    "todos os registros."
+)
+
+if media_ajuste > mediana + 0.5 * desvio_ajuste:
+    st.warning(
+        "A curva Normal apresenta ajuste limitado, pois a variável "
+        "possui assimetria à direita: valores elevados formam uma "
+        "cauda e aumentam a média."
+    )
+
+elif media_ajuste < mediana - 0.5 * desvio_ajuste:
+    st.warning(
+        "A curva Normal apresenta ajuste limitado, pois a variável "
+        "possui assimetria à esquerda."
+    )
+
+else:
+    st.info(
+        "A distribuição observada apresenta proximidade razoável "
+        "com a curva Normal, embora diferenças ainda possam existir."
+    )
+    
 st.subheader("Distribuição Normal")
 
 st.write(
@@ -1047,8 +1134,15 @@ else:
 
     valor_para_previsao = st.number_input(
         f"Informe um valor de {variavel_x} para realizar uma previsão:",
+        min_value=float(menor_x),
+        max_value=float(maior_x),
         value=float(ms.media(valores_x_correlacao)),
         key="valor_previsao_regressao",
+    )
+
+    st.caption(
+        f"A previsão está limitada ao intervalo observado de "
+        f"{menor_x:.2f} a {maior_x:.2f}, evitando extrapolação."
     )
 
     previsao = (
