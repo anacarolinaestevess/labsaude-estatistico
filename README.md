@@ -4,6 +4,16 @@ Laboratório estatístico interativo desenvolvido em Python e Streamlit com dado
 
 O projeto utiliza registros de Autorizações de Internação Hospitalar do Distrito Federal, referentes à competência janeiro de 2025.
 
+## Aplicativo publicado
+
+Acesse o laboratório estatístico interativo:
+
+[https://labsaude-sus-estatistico.streamlit.app/](https://labsaude-sus-estatistico.streamlit.app/)
+
+## Vídeo de apresentação
+
+[Assista à demonstração do LabSaúde SUS](https://youtu.be/muM0GcLSFyM)
+
 ## Base de dados
 
 - Fonte: Sistema de Informações Hospitalares do SUS — SIH/SUS
