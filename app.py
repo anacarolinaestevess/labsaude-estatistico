@@ -6,6 +6,7 @@ import streamlit as st
 import minhastats as ms
 import matplotlib.pyplot as plt
 import math
+import numpy as np
 
 ARQUIVO_DADOS = Path(
     "dados/internacoes_sih_df_janeiro_2025.csv"
@@ -433,3 +434,180 @@ with coluna_setores:
 
     st.pyplot(figura_setores)
     plt.close(figura_setores)
+
+#SIMULAÇÃO DE MONTE CARLO
+
+st.divider()
+st.header("Simulações de Monte Carlo")
+
+st.subheader("Lei dos Grandes Números")
+
+st.write(
+    "A simulação mostra como a média observada se aproxima da média "
+    "teórica à medida que o tamanho da amostra aumenta."
+)
+
+tamanho_amostra = st.slider(
+    "Número de observações da simulação:",
+    min_value=100,
+    max_value=10000,
+    value=1000,
+    step=100,
+)
+
+media_teorica = 50
+desvio_teorico = 10
+
+gerador = np.random.default_rng(seed=42)
+
+amostra_simulada = gerador.normal(
+    loc=media_teorica,
+    scale=desvio_teorico,
+    size=tamanho_amostra,
+)
+
+medias_acumuladas = []
+
+for tamanho_atual in range(1, tamanho_amostra + 1):
+    media_atual = ms.media(
+        amostra_simulada[:tamanho_atual].tolist()
+    )
+    medias_acumuladas.append(media_atual)
+
+    # GRÁFICO DA SIMULAÇÃO
+
+figura_lgn, eixo_lgn = plt.subplots()
+
+eixo_lgn.plot(
+    range(1, tamanho_amostra + 1),
+    medias_acumuladas,
+    color="#2E86AB",
+    label="Média acumulada",
+)
+
+eixo_lgn.axhline(
+    media_teorica,
+    color="#D1495B",
+    linestyle="--",
+    label="Média teórica",
+)
+
+eixo_lgn.set_xlabel("Tamanho da amostra")
+eixo_lgn.set_ylabel("Média acumulada")
+eixo_lgn.set_title("Convergência da média amostral")
+eixo_lgn.legend()
+
+st.pyplot(figura_lgn)
+plt.close(figura_lgn)
+
+st.write(
+    f"Com **{tamanho_amostra} observações**, a média obtida foi "
+    f"**{medias_acumuladas[-1]:.2f}**, enquanto a média teórica "
+    f"da distribuição é **{media_teorica:.2f}**."
+)
+
+# TEOREMA CENTRAL DO LIMITE
+
+st.subheader("Teorema Central do Limite")
+
+st.write(
+    "Nesta simulação, retiramos várias amostras de uma população "
+    "exponencial e calculamos a média de cada amostra."
+)
+
+coluna_tamanho, coluna_repeticoes = st.columns(2)
+
+with coluna_tamanho:
+    tamanho_cada_amostra = st.slider(
+        "Tamanho de cada amostra:",
+        min_value=2,
+        max_value=200,
+        value=30,
+        step=1,
+    )
+
+with coluna_repeticoes:
+    numero_repeticoes = st.slider(
+        "Número de amostras simuladas:",
+        min_value=100,
+        max_value=5000,
+        value=1000,
+        step=100,
+    )
+
+media_populacional = 10
+
+gerador_tcl = np.random.default_rng(seed=42)
+
+medias_amostrais = []
+
+for _ in range(numero_repeticoes):
+    amostra = gerador_tcl.exponential(
+        scale=media_populacional,
+        size=tamanho_cada_amostra,
+    )
+
+    medias_amostrais.append(
+        ms.media(amostra.tolist())
+    )
+
+ # GRÁFICO DA SIMULAÇÃO
+
+figura_tcl, eixo_tcl = plt.subplots()
+
+eixo_tcl.hist(
+    medias_amostrais,
+    bins=30,
+    density=True,
+    color="#7AC7C4",
+    edgecolor="white",
+    label="Médias simuladas",
+)
+
+erro_padrao = media_populacional / math.sqrt(tamanho_cada_amostra)
+
+valores_x = np.linspace(
+    min(medias_amostrais),
+    max(medias_amostrais),
+    300,
+)
+
+densidade_normal = (
+    1 / (erro_padrao * math.sqrt(2 * math.pi))
+    * np.exp(
+        -0.5
+        * ((valores_x - media_populacional) / erro_padrao) ** 2
+    )
+)
+
+eixo_tcl.plot(
+    valores_x,
+    densidade_normal,
+    color="#D1495B",
+    linewidth=2,
+    label="Distribuição normal teórica",
+)
+
+eixo_tcl.axvline(
+    media_populacional,
+    color="black",
+    linestyle="--",
+    label="Média populacional",
+)
+
+eixo_tcl.set_xlabel("Média amostral")
+eixo_tcl.set_ylabel("Densidade")
+eixo_tcl.set_title("Distribuição das médias amostrais")
+eixo_tcl.legend()
+
+st.pyplot(figura_tcl)
+plt.close(figura_tcl)
+
+media_das_medias = ms.media(medias_amostrais)
+
+st.info(
+    f"A população original é assimétrica, mas a distribuição das "
+    f"médias torna-se aproximadamente normal. A média das médias "
+    f"foi {media_das_medias:.2f}, próxima da média populacional "
+    f"teórica de {media_populacional:.2f}."
+)
