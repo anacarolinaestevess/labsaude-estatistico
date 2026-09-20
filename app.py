@@ -227,7 +227,7 @@ with coluna_boxplot:
 
 # INTERPRETAÇÃO AUTOMÁTICA
 
-    st.subheader("Interpretação automática")
+st.subheader("Interpretação automática")
 
 diferenca = media - mediana
 tolerancia = 0.1 * desvio_padrao
@@ -339,11 +339,6 @@ st.caption(
     "do arquivo minhastats.py."
 )
 
-st.caption(
-    "As medidas exibidas são calculadas pelas funções "
-    "próprias do arquivo minhastats.py."
-)
-
 # Início da análise categórica
 
 st.divider()
@@ -443,38 +438,45 @@ st.header("Simulações de Monte Carlo")
 st.subheader("Lei dos Grandes Números")
 
 st.write(
-    "A simulação mostra como a média observada se aproxima da média "
-    "teórica à medida que o tamanho da amostra aumenta."
+    "Nesta simulação, os 20.996 registros de valor total das AIH "
+    "formam a população empírica. Retiramos observações aleatórias "
+    "com reposição e acompanhamos a convergência da média amostral "
+    "para a média de todos os registros."
 )
+
+valores_valor_total = (
+    dados["valor_total"]
+    .dropna()
+    .tolist()
+)
+
+media_populacional_valor = ms.media(valores_valor_total)
 
 tamanho_amostra = st.slider(
-    "Número de observações da simulação:",
+    "Número de observações sorteadas:",
     min_value=100,
-    max_value=10000,
+    max_value=20000,
     value=1000,
     step=100,
+    key="tamanho_lgn_valor_total",
 )
 
-media_teorica = 50
-desvio_teorico = 10
+gerador_lgn = np.random.default_rng(seed=42)
 
-gerador = np.random.default_rng(seed=42)
-
-amostra_simulada = gerador.normal(
-    loc=media_teorica,
-    scale=desvio_teorico,
+amostra_valor_total = gerador_lgn.choice(
+    valores_valor_total,
     size=tamanho_amostra,
+    replace=True,
 )
 
 medias_acumuladas = []
+soma_acumulada = 0
 
-for tamanho_atual in range(1, tamanho_amostra + 1):
-    media_atual = ms.media(
-        amostra_simulada[:tamanho_atual].tolist()
-    )
-    medias_acumuladas.append(media_atual)
+for posicao, valor in enumerate(amostra_valor_total, start=1):
+    soma_acumulada += valor
+    medias_acumuladas.append(soma_acumulada / posicao)
 
-    # GRÁFICO DA SIMULAÇÃO
+# GRÁFICO DA SIMULAÇÃO
 
 figura_lgn, eixo_lgn = plt.subplots()
 
@@ -482,28 +484,35 @@ eixo_lgn.plot(
     range(1, tamanho_amostra + 1),
     medias_acumuladas,
     color="#2E86AB",
-    label="Média acumulada",
+    label="Média acumulada da amostra",
 )
 
 eixo_lgn.axhline(
-    media_teorica,
+    media_populacional_valor,
     color="#D1495B",
     linestyle="--",
-    label="Média teórica",
+    label="Média dos 20.996 registros",
 )
 
-eixo_lgn.set_xlabel("Tamanho da amostra")
-eixo_lgn.set_ylabel("Média acumulada")
-eixo_lgn.set_title("Convergência da média amostral")
+eixo_lgn.set_xlabel("Número de observações sorteadas")
+eixo_lgn.set_ylabel("Valor médio da AIH (R$)")
+eixo_lgn.set_title("Convergência da média do valor total")
 eixo_lgn.legend()
 
 st.pyplot(figura_lgn)
 plt.close(figura_lgn)
 
 st.write(
-    f"Com **{tamanho_amostra} observações**, a média obtida foi "
-    f"**{medias_acumuladas[-1]:.2f}**, enquanto a média teórica "
-    f"da distribuição é **{media_teorica:.2f}**."
+    f"A média dos 20.996 registros é "
+    f"**R$ {media_populacional_valor:,.2f}**. "
+    f"Após {tamanho_amostra} sorteios, a média acumulada foi "
+    f"**R$ {medias_acumuladas[-1]:,.2f}**."
+)
+
+st.caption(
+    "Os sorteios são feitos com reposição: um mesmo registro pode "
+    "ser selecionado mais de uma vez, como é habitual em simulações "
+    "de Monte Carlo."
 )
 
 # TEOREMA CENTRAL DO LIMITE
@@ -511,8 +520,9 @@ st.write(
 st.subheader("Teorema Central do Limite")
 
 st.write(
-    "Nesta simulação, retiramos várias amostras de uma população "
-    "exponencial e calculamos a média de cada amostra."
+    "Nesta simulação, retiramos repetidamente amostras aleatórias, "
+    "com reposição, dos valores totais das 20.996 AIH. Para cada "
+    "amostra, calculamos a média do valor total."
 )
 
 coluna_tamanho, coluna_repeticoes = st.columns(2)
@@ -524,6 +534,7 @@ with coluna_tamanho:
         max_value=200,
         value=30,
         step=1,
+        key="tamanho_tcl_valor_total",
     )
 
 with coluna_repeticoes:
@@ -533,25 +544,30 @@ with coluna_repeticoes:
         max_value=5000,
         value=1000,
         step=100,
+        key="repeticoes_tcl_valor_total",
     )
 
-media_populacional = 10
+desvio_populacional_valor = ms.desvio_padrao(
+    valores_valor_total,
+    amostral=False,
+)
 
 gerador_tcl = np.random.default_rng(seed=42)
 
 medias_amostrais = []
 
 for _ in range(numero_repeticoes):
-    amostra = gerador_tcl.exponential(
-        scale=media_populacional,
+    amostra = gerador_tcl.choice(
+        valores_valor_total,
         size=tamanho_cada_amostra,
+        replace=True,
     )
 
     medias_amostrais.append(
         ms.media(amostra.tolist())
     )
 
- # GRÁFICO DA SIMULAÇÃO
+# GRÁFICO DO TEOREMA CENTRAL DO LIMITE
 
 figura_tcl, eixo_tcl = plt.subplots()
 
@@ -564,7 +580,10 @@ eixo_tcl.hist(
     label="Médias simuladas",
 )
 
-erro_padrao = media_populacional / math.sqrt(tamanho_cada_amostra)
+erro_padrao = (
+    desvio_populacional_valor
+    / math.sqrt(tamanho_cada_amostra)
+)
 
 valores_x = np.linspace(
     min(medias_amostrais),
@@ -572,32 +591,35 @@ valores_x = np.linspace(
     300,
 )
 
-densidade_normal = (
+densidade_normal_tcl = (
     1 / (erro_padrao * math.sqrt(2 * math.pi))
     * np.exp(
         -0.5
-        * ((valores_x - media_populacional) / erro_padrao) ** 2
+        * (
+            (valores_x - media_populacional_valor)
+            / erro_padrao
+        ) ** 2
     )
 )
 
 eixo_tcl.plot(
     valores_x,
-    densidade_normal,
+    densidade_normal_tcl,
     color="#D1495B",
     linewidth=2,
     label="Distribuição normal teórica",
 )
 
 eixo_tcl.axvline(
-    media_populacional,
+    media_populacional_valor,
     color="black",
     linestyle="--",
-    label="Média populacional",
+    label="Média dos 20.996 registros",
 )
 
-eixo_tcl.set_xlabel("Média amostral")
+eixo_tcl.set_xlabel("Média amostral do valor total (R$)")
 eixo_tcl.set_ylabel("Densidade")
-eixo_tcl.set_title("Distribuição das médias amostrais")
+eixo_tcl.set_title("Distribuição das médias do valor total")
 eixo_tcl.legend()
 
 st.pyplot(figura_tcl)
@@ -606,8 +628,256 @@ plt.close(figura_tcl)
 media_das_medias = ms.media(medias_amostrais)
 
 st.info(
-    f"A população original é assimétrica, mas a distribuição das "
-    f"médias torna-se aproximadamente normal. A média das médias "
-    f"foi {media_das_medias:.2f}, próxima da média populacional "
-    f"teórica de {media_populacional:.2f}."
+    f"A média dos 20.996 registros é "
+    f"R$ {media_populacional_valor:,.2f}. "
+    f"A média das {numero_repeticoes} médias amostrais foi "
+    f"R$ {media_das_medias:,.2f}. À medida que o tamanho das "
+    f"amostras aumenta, sua distribuição tende a se aproximar "
+    f"de uma distribuição Normal."
+)
+
+# DISTRIBUIÇÃO DE PROBABILIDADE
+
+st.divider()
+st.header("Distribuições de probabilidade")
+
+st.subheader("Distribuição Normal")
+
+st.write(
+    "Altere os parâmetros para observar como a média e o "
+    "desvio-padrão modificam a distribuição."
+)
+
+coluna_media_normal, coluna_desvio_normal = st.columns(2)
+
+with coluna_media_normal:
+    media_normal = st.number_input(
+        "Média da distribuição:",
+        value=0.0,
+        step=1.0,
+    )
+
+with coluna_desvio_normal:
+    desvio_normal = st.number_input(
+        "Desvio-padrão da distribuição:",
+        min_value=0.1,
+        value=1.0,
+        step=0.1,
+    )
+
+coluna_inicio, coluna_fim = st.columns(2)
+
+with coluna_inicio:
+    inicio_intervalo = st.number_input(
+        "Início do intervalo:",
+        value=-1.0,
+        step=0.1,
+    )
+
+with coluna_fim:
+    fim_intervalo = st.number_input(
+        "Fim do intervalo:",
+        value=1.0,
+        step=0.1,
+    )
+
+        # CALCULO DA DISTRIBUIÇÃO DE PROBABILIDADES
+valores_normal = np.linspace(
+    media_normal - 4 * desvio_normal,
+    media_normal + 4 * desvio_normal,
+    500,
+)
+
+densidade_normal_teorica = (
+    1 / (desvio_normal * math.sqrt(2 * math.pi))
+    * np.exp(
+        -0.5
+        * ((valores_normal - media_normal) / desvio_normal) ** 2
+    )
+)
+
+if inicio_intervalo < fim_intervalo:
+    z_inicio = (
+        inicio_intervalo - media_normal
+    ) / (desvio_normal * math.sqrt(2))
+
+    z_fim = (
+        fim_intervalo - media_normal
+    ) / (desvio_normal * math.sqrt(2))
+
+    probabilidade = 0.5 * (
+        math.erf(z_fim) - math.erf(z_inicio)
+    )
+
+    # GRÁFICO DA DISTRIBUIÇÃO 
+
+    figura_normal, eixo_normal = plt.subplots()
+
+    eixo_normal.plot(
+        valores_normal,
+        densidade_normal_teorica,
+        color="#2E86AB",
+        linewidth=2,
+    )
+
+    mascara_intervalo = (
+        (valores_normal >= inicio_intervalo)
+        & (valores_normal <= fim_intervalo)
+    )
+
+    eixo_normal.fill_between(
+        valores_normal,
+        densidade_normal_teorica,
+        where=mascara_intervalo,
+        color="#7AC7C4",
+        alpha=0.7,
+    )
+
+    eixo_normal.axvline(
+        media_normal,
+        color="#D1495B",
+        linestyle="--",
+        label="Média",
+    )
+
+    eixo_normal.set_xlabel("Valor")
+    eixo_normal.set_ylabel("Densidade")
+    eixo_normal.set_title("Curva da distribuição Normal")
+    eixo_normal.legend()
+
+    st.pyplot(figura_normal)
+    plt.close(figura_normal)
+
+    st.success(
+        f"A probabilidade de um valor estar entre "
+        f"{inicio_intervalo:.2f} e {fim_intervalo:.2f} é "
+        f"**{probabilidade * 100:.2f}%**."
+    )
+
+else:
+    st.error(
+        "O início do intervalo deve ser menor que o final."
+    )
+
+# DISTRIBUIÇÃO BINOMIAL
+
+st.subheader("Distribuição Binomial")
+
+st.write(
+    "A distribuição Binomial representa o número de ocorrências de "
+    "um evento em uma quantidade fixa de observações. Nesta aplicação, "
+    "o evento considerado é o registro de óbito em uma AIH."
+)
+
+obitos_booleanos = (
+    dados["obito"]
+    .astype(str)
+    .str.strip()
+    .str.lower()
+    .isin(["sim", "1", "óbito", "obito"])
+)
+
+numero_obitos = int(obitos_booleanos.sum())
+probabilidade_obito_observada = numero_obitos / len(dados)
+
+st.write(
+    f"Na base analisada, foram registrados **{numero_obitos} óbitos** "
+    f"em **{len(dados)} AIH**, correspondendo a "
+    f"**{probabilidade_obito_observada * 100:.2f}%**."
+)
+
+coluna_n, coluna_p = st.columns(2)
+
+with coluna_n:
+    numero_aihs = st.slider(
+        "Número hipotético de AIH:",
+        min_value=1,
+        max_value=100,
+        value=30,
+        step=1,
+    )
+
+with coluna_p:
+    probabilidade_obito = st.slider(
+        "Probabilidade de óbito em cada AIH:",
+        min_value=0.0,
+        max_value=1.0,
+        value=float(probabilidade_obito_observada),
+        step=0.001,
+        format="%.3f",
+    )
+
+numero_selecionado = st.slider(
+    "Número de óbitos para calcular a probabilidade:",
+    min_value=0,
+    max_value=numero_aihs,
+    value=min(1, numero_aihs),
+    step=1,
+)
+
+valores_binomial = list(range(numero_aihs + 1))
+
+probabilidades_binomial = []
+
+for numero_eventos in valores_binomial:
+    probabilidade = (
+        math.comb(numero_aihs, numero_eventos)
+        * probabilidade_obito ** numero_eventos
+        * (1 - probabilidade_obito) ** (
+            numero_aihs - numero_eventos
+        )
+    )
+
+    probabilidades_binomial.append(probabilidade)
+
+probabilidade_exata = probabilidades_binomial[
+    numero_selecionado
+]
+
+probabilidade_acumulada = sum(
+    probabilidades_binomial[:numero_selecionado + 1]
+)
+
+# GRÁFICO DA DISTRIBUIÇÃO BINOMIAL
+
+figura_binomial, eixo_binomial = plt.subplots()
+
+eixo_binomial.bar(
+    valores_binomial,
+    probabilidades_binomial,
+    color="#7AC7C4",
+    edgecolor="white",
+)
+
+eixo_binomial.bar(
+    numero_selecionado,
+    probabilidade_exata,
+    color="#D1495B",
+    label="Número selecionado",
+)
+
+eixo_binomial.set_xlabel("Número de óbitos")
+eixo_binomial.set_ylabel("Probabilidade")
+eixo_binomial.set_title("Distribuição Binomial")
+eixo_binomial.legend()
+
+st.pyplot(figura_binomial)
+plt.close(figura_binomial)
+
+coluna_exata, coluna_acumulada = st.columns(2)
+
+coluna_exata.metric(
+    f"P(X = {numero_selecionado})",
+    f"{probabilidade_exata * 100:.2f}%",
+)
+
+coluna_acumulada.metric(
+    f"P(X ≤ {numero_selecionado})",
+    f"{probabilidade_acumulada * 100:.2f}%",
+)
+
+st.caption(
+    "Esta é uma aplicação didática. O modelo Binomial pressupõe "
+    "observações independentes e probabilidade constante. Além disso, "
+    "a base contém registros de AIH, e não necessariamente pessoas únicas."
 )
