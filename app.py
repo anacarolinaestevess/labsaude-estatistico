@@ -881,3 +881,189 @@ st.caption(
     "observações independentes e probabilidade constante. Além disso, "
     "a base contém registros de AIH, e não necessariamente pessoas únicas."
 )
+
+# CORRELAÇÃO E REGRESSÃO LINEAR
+
+st.divider()
+st.header("Correlação e regressão linear")
+
+st.subheader("Correlação de Pearson")
+
+st.write(
+    "Selecione duas variáveis numéricas para avaliar a direção "
+    "e a intensidade da relação linear entre elas."
+)
+
+coluna_x, coluna_y = st.columns(2)
+
+with coluna_x:
+    variavel_x = st.selectbox(
+        "Variável explicativa (X):",
+        VARIAVEIS_NUMERICAS,
+        index=1,
+        key="variavel_x_correlacao",
+    )
+
+with coluna_y:
+    variavel_y = st.selectbox(
+        "Variável resposta (Y):",
+        VARIAVEIS_NUMERICAS,
+        index=4,
+        key="variavel_y_correlacao",
+    )
+
+if variavel_x == variavel_y:
+    st.warning(
+        "Escolha duas variáveis diferentes para realizar a análise."
+    )
+
+else:
+    dados_correlacao = dados[
+        [variavel_x, variavel_y]
+    ].dropna()
+
+    valores_x_correlacao = (
+        dados_correlacao[variavel_x].tolist()
+    )
+
+    valores_y_correlacao = (
+        dados_correlacao[variavel_y].tolist()
+    )
+
+    correlacao = ms.correlacao_pearson(
+        valores_x_correlacao,
+        valores_y_correlacao,
+    )
+
+    valor_absoluto_correlacao = abs(correlacao)
+
+    if valor_absoluto_correlacao < 0.3:
+        intensidade = "fraca"
+    elif valor_absoluto_correlacao < 0.7:
+        intensidade = "moderada"
+    else:
+        intensidade = "forte"
+
+    if correlacao > 0:
+        direcao = "positiva"
+    elif correlacao < 0:
+        direcao = "negativa"
+    else:
+        direcao = "nula"
+
+    st.metric(
+        "Coeficiente de correlação de Pearson",
+        f"{correlacao:.4f}",
+    )
+
+    st.info(
+        f"A correlação observada é **{direcao}** e "
+        f"**{intensidade}**. Correlação não implica causalidade."
+    )
+    figura_correlacao, eixo_correlacao = plt.subplots()
+
+    eixo_correlacao.scatter(
+        valores_x_correlacao,
+        valores_y_correlacao,
+        alpha=0.3,
+        color="#2E86AB",
+        s=15,
+    )
+
+    eixo_correlacao.set_xlabel(variavel_x)
+    eixo_correlacao.set_ylabel(variavel_y)
+    eixo_correlacao.set_title(
+        f"{variavel_x} × {variavel_y}"
+    )
+
+    st.pyplot(figura_correlacao)
+    plt.close(figura_correlacao)    
+
+    # REGRESSÃO LINEAR SIMPLES
+
+    st.subheader("Regressão linear simples")
+
+    intercepto, inclinacao, r_quadrado = ms.regressao_linear(
+        valores_x_correlacao,
+        valores_y_correlacao,
+    )
+
+    st.write(
+        f"Equação estimada: **Y = {intercepto:.4f} "
+        f"+ ({inclinacao:.4f} × X)**"
+    )
+
+    colunas_regressao = st.columns(3)
+
+    colunas_regressao[0].metric(
+        "Intercepto",
+        f"{intercepto:.4f}",
+    )
+
+    colunas_regressao[1].metric(
+        "Coeficiente angular",
+        f"{inclinacao:.4f}",
+    )
+
+    colunas_regressao[2].metric(
+        "Coeficiente de determinação (R²)",
+        f"{r_quadrado:.4f}",
+    )
+
+# GRÁFICO DA REGRESSÃO LINEAR
+
+    menor_x = min(valores_x_correlacao)
+    maior_x = max(valores_x_correlacao)
+
+    linha_x = np.array([menor_x, maior_x])
+    linha_y = intercepto + inclinacao * linha_x
+
+    figura_regressao, eixo_regressao = plt.subplots()
+
+    eixo_regressao.scatter(
+        valores_x_correlacao,
+        valores_y_correlacao,
+        alpha=0.25,
+        color="#2E86AB",
+        s=15,
+        label="Registros observados",
+    )
+
+    eixo_regressao.plot(
+        linha_x,
+        linha_y,
+        color="#D1495B",
+        linewidth=2,
+        label="Reta de regressão",
+    )
+
+    eixo_regressao.set_xlabel(variavel_x)
+    eixo_regressao.set_ylabel(variavel_y)
+    eixo_regressao.set_title("Regressão linear simples")
+    eixo_regressao.legend()
+
+    st.pyplot(figura_regressao)
+    plt.close(figura_regressao)
+
+    valor_para_previsao = st.number_input(
+        f"Informe um valor de {variavel_x} para realizar uma previsão:",
+        value=float(ms.media(valores_x_correlacao)),
+        key="valor_previsao_regressao",
+    )
+
+    previsao = (
+        intercepto
+        + inclinacao * valor_para_previsao
+    )
+
+    st.success(
+        f"Para {variavel_x} = {valor_para_previsao:.2f}, "
+        f"o valor previsto de {variavel_y} é "
+        f"**{previsao:.2f}**."
+    )
+
+    st.caption(
+        "A previsão representa uma estimativa média baseada em uma "
+        "relação linear. Ela não estabelece causalidade e deve ser "
+        "interpretada dentro do intervalo observado dos dados."
+    )
