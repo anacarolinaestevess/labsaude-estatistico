@@ -141,3 +141,167 @@ def desvio_padrao(dados, amostral=True):
         dados,
         amostral=amostral
     ) ** 0.5
+
+# PERCENTIL
+
+def percentil(dados, p):
+    """
+    Calcula um percentil utilizando interpolação linear.
+
+    O percentil p deve estar entre 0 e 100.
+    A posição é calculada por:
+    h = (n - 1) * p / 100
+    """
+    if len(dados) == 0:
+        raise ValueError(
+            "Percentil de sequência vazia é indefinido."
+        )
+
+    if p < 0 or p > 100:
+        raise ValueError(
+            "O percentil deve estar entre 0 e 100."
+        )
+
+    dados_ordenados = sorted(dados)
+    n = len(dados_ordenados)
+
+    posicao = (n - 1) * p / 100
+
+    indice_inferior = int(posicao)
+    indice_superior = min(
+        indice_inferior + 1,
+        n - 1
+    )
+
+    fracao = posicao - indice_inferior
+
+    valor_inferior = dados_ordenados[indice_inferior]
+    valor_superior = dados_ordenados[indice_superior]
+
+    return (
+        valor_inferior
+        + fracao * (valor_superior - valor_inferior)
+    )
+
+# QUARTIS
+
+def quartis(dados):
+    """
+    Calcula o primeiro, o segundo e o terceiro quartil.
+
+    Retorna um dicionário com Q1, Q2 e Q3.
+    """
+    return {
+        "Q1": percentil(dados, 25),
+        "Q2": percentil(dados, 50),
+        "Q3": percentil(dados, 75),
+    }
+
+# Coeficiente de variação
+
+def coeficiente_variacao(dados, amostral=True):
+    """
+    Calcula o coeficiente de variação em percentual.
+
+    Se amostral=True, utiliza o desvio-padrão amostral.
+    Se amostral=False, utiliza o desvio-padrão populacional.
+    """
+    media_dos_dados = media(dados)
+
+    if abs(media_dos_dados) < 1e-12:
+        raise ValueError(
+            "O coeficiente de variação é indefinido "
+            "quando a média é zero ou muito próxima de zero."
+        )
+
+    desvio = desvio_padrao(
+        dados,
+        amostral=amostral
+    )
+
+    return (desvio / media_dos_dados) * 100
+
+# COVARIÂNCIA
+
+def covariancia(x, y, amostral=True):
+    """
+    Calcula a covariância entre duas sequências numéricas.
+
+    Se amostral=True, divide por n - 1.
+    Se amostral=False, divide por n.
+    """
+    if len(x) != len(y):
+        raise ValueError(
+            "As sequências devem ter o mesmo tamanho."
+        )
+
+    n = len(x)
+
+    if n == 0:
+        raise ValueError(
+            "Covariância de sequências vazias é indefinida."
+        )
+
+    if amostral and n < 2:
+        raise ValueError(
+            "Covariância amostral exige pelo menos dois pares."
+        )
+
+    media_x = media(x)
+    media_y = media(y)
+
+    soma_dos_produtos = sum(
+        (valor_x - media_x) * (valor_y - media_y)
+        for valor_x, valor_y in zip(x, y)
+    )
+
+    if amostral:
+        divisor = n - 1
+    else:
+        divisor = n
+
+    return soma_dos_produtos / divisor
+
+# CORRELAÇÃO DE PEARSON
+
+def correlacao_pearson(x, y):
+    """
+    Calcula o coeficiente de correlação de Pearson.
+
+    O resultado varia de -1 a 1:
+    - próximo de 1: associação linear positiva;
+    - próximo de -1: associação linear negativa;
+    - próximo de 0: pouca associação linear.
+    """
+    if len(x) != len(y):
+        raise ValueError(
+            "As sequências devem ter o mesmo tamanho."
+        )
+
+    if len(x) < 2:
+        raise ValueError(
+            "A correlação exige pelo menos dois pares."
+        )
+
+    desvio_x = desvio_padrao(
+        x,
+        amostral=True
+    )
+
+    desvio_y = desvio_padrao(
+        y,
+        amostral=True
+    )
+
+    if abs(desvio_x) < 1e-12 or abs(desvio_y) < 1e-12:
+        raise ValueError(
+            "A correlação é indefinida para variável constante."
+        )
+
+    covariancia_xy = covariancia(
+        x,
+        y,
+        amostral=True
+    )
+
+    return covariancia_xy / (desvio_x * desvio_y)
