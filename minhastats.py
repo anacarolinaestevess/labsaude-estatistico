@@ -305,3 +305,73 @@ def correlacao_pearson(x, y):
     )
 
     return covariancia_xy / (desvio_x * desvio_y)
+
+# REGRESSION LINEAR
+
+def regressao_linear(x, y):
+    """
+    Calcula uma regressão linear simples por mínimos quadrados.
+
+    Retorna:
+    - intercepto b0;
+    - inclinação b1;
+    - coeficiente de determinação R².
+    """
+    if len(x) != len(y):
+        raise ValueError(
+            "As sequências devem ter o mesmo tamanho."
+        )
+
+    if len(x) < 2:
+        raise ValueError(
+            "A regressão exige pelo menos dois pares."
+        )
+
+    media_x = media(x)
+    media_y = media(y)
+
+    soma_produtos = sum(
+        (valor_x - media_x) * (valor_y - media_y)
+        for valor_x, valor_y in zip(x, y)
+    )
+
+    soma_quadrados_x = sum(
+        (valor_x - media_x) ** 2
+        for valor_x in x
+    )
+
+    if abs(soma_quadrados_x) < 1e-12:
+        raise ValueError(
+            "A regressão é indefinida quando X é constante."
+        )
+
+    inclinacao = soma_produtos / soma_quadrados_x
+    intercepto = media_y - inclinacao * media_x
+
+    valores_previstos = [
+        intercepto + inclinacao * valor_x
+        for valor_x in x
+    ]
+
+    soma_quadrados_residuos = sum(
+        (valor_y - previsto) ** 2
+        for valor_y, previsto in zip(y, valores_previstos)
+    )
+
+    soma_quadrados_total = sum(
+        (valor_y - media_y) ** 2
+        for valor_y in y
+    )
+
+    if abs(soma_quadrados_total) < 1e-12:
+        raise ValueError(
+            "O R² é indefinido quando Y é constante."
+        )
+
+    r_quadrado = (
+        1
+        - soma_quadrados_residuos
+        / soma_quadrados_total
+    )
+
+    return intercepto, inclinacao, r_quadrado

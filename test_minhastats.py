@@ -533,3 +533,96 @@ def test_correlacao_com_um_par():
             [1],
             [2]
         )
+
+# TESTE REGRESSION LINEAR
+
+def test_regressao_linear_perfeita():
+    intercepto, inclinacao, r_quadrado = (
+        ms.regressao_linear(
+            [1, 2, 3, 4],
+            [2, 4, 6, 8]
+        )
+    )
+
+    assert np.isclose(intercepto, 0.0)
+    assert np.isclose(inclinacao, 2.0)
+    assert np.isclose(r_quadrado, 1.0)
+
+
+def test_regressao_linear_compara_com_scipy():
+    x = DADOS
+
+    y = [
+        0.7 * valor + (indice % 5)
+        for indice, valor in enumerate(DADOS)
+    ]
+
+    intercepto, inclinacao, r_quadrado = (
+        ms.regressao_linear(x, y)
+    )
+
+    referencia = stats.linregress(x, y)
+
+    assert np.isclose(
+        intercepto,
+        referencia.intercept,
+        rtol=1e-9
+    )
+
+    assert np.isclose(
+        inclinacao,
+        referencia.slope,
+        rtol=1e-9
+    )
+
+    assert np.isclose(
+        r_quadrado,
+        referencia.rvalue ** 2,
+        rtol=1e-9
+    )
+
+
+def test_regressao_permite_predicao():
+    intercepto, inclinacao, _ = (
+        ms.regressao_linear(
+            [1, 2, 3, 4],
+            [2, 4, 6, 8]
+        )
+    )
+
+    novo_x = 5
+    previsao = intercepto + inclinacao * novo_x
+
+    assert np.isclose(previsao, 10.0)
+
+
+def test_regressao_tamanhos_diferentes():
+    with pytest.raises(ValueError):
+        ms.regressao_linear(
+            [1, 2, 3],
+            [1, 2]
+        )
+
+
+def test_regressao_x_constante():
+    with pytest.raises(ValueError):
+        ms.regressao_linear(
+            [1, 1, 1],
+            [2, 3, 4]
+        )
+
+
+def test_regressao_y_constante():
+    with pytest.raises(ValueError):
+        ms.regressao_linear(
+            [1, 2, 3],
+            [4, 4, 4]
+        )
+
+
+def test_regressao_com_um_par():
+    with pytest.raises(ValueError):
+        ms.regressao_linear(
+            [1],
+            [2]
+        )
